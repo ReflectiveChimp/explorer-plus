@@ -1,7 +1,7 @@
 {
   "name": "explorer-plus",
-  "version": "1.0.1",
-  "author": "RC",
+  "version": "1.0.2",
+  "author": "ReflectiveChimp",
   "license": "MIT",
   "private": true,
   "scripts": {
