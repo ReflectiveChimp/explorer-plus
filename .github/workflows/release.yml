@@ -23,9 +23,8 @@ jobs:
         run: |
           yarn install
           yarn run build
-          mkdir ${{ env.PLUGIN_NAME }}
-          cp -r dist/* ${{ env.PLUGIN_NAME }}
-          zip -r ${{ env.PLUGIN_NAME }}.zip ${{ env.PLUGIN_NAME }}
+          cd dist
+          zip -r ${{ env.PLUGIN_NAME }}.zip *
           ls
           echo "::set-output name=tag_name::$(git tag --sort version:refname | tail -n 1)"
 
@@ -48,6 +47,6 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./${{ env.PLUGIN_NAME }}.zip
+          asset_path: ./dist/${{ env.PLUGIN_NAME }}.zip
           asset_name: ${{ env.PLUGIN_NAME }}-${{ steps.build.outputs.tag_name }}.zip
           asset_content_type: application/zip
