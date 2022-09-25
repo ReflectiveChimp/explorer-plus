@@ -1,7 +1,6 @@
 {
-  "name": "rc-explorer-plus",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "explorer-plus",
+  "version": "1.0.1",
   "author": "RC",
   "license": "MIT",
   "private": true,
