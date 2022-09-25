@@ -1,0 +1,32 @@
+{
+  "name": "rc-explorer-plus",
+  "version": "1.0.0",
+  "main": "index.js",
+  "author": "RC",
+  "license": "MIT",
+  "private": true,
+  "scripts": {
+    "prepare": "husky install",
+    "build": "webpack --config webpack/webpack.config.js"
+  },
+  "devDependencies": {
+    "@types/chrome": "^0.0.197",
+    "copy-webpack-plugin": "^11.0.0",
+    "ts-loader": "^9.4.1",
+    "typescript": "^4.8.3",
+    "webpack": "^5.74.0",
+    "webpack-cli": "^4.10.0"
+  },
+  "dependencies": {
+    "@emotion/css": "^11.10.0",
+    "@ethersproject/abi": "^5.7.0",
+    "@ethersproject/hash": "^5.7.0",
+    "husky": "^8.0.1",
+    "lint-staged": "^13.0.3",
+    "p-map": "4.0.0",
+    "prettier": "^2.7.1"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,json}": "prettier --write"
+  }
+}

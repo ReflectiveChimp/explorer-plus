@@ -1,0 +1,42 @@
+{
+  "name": "Explorer Plus",
+  "description": "Adds additional features to block explorers.",
+  "version": "1.0",
+  "manifest_version": 3,
+  "icons": {
+    "16": "/images/icon16.png",
+    "32": "/images/icon32.png",
+    "48": "/images/icon48.png",
+    "128": "/images/icon128.png"
+  },
+  "content_scripts": [
+    {
+      "all_frames": true,
+      "matches": [
+        "https://etherscan.io/*",
+        "https://www.etherscan.io/*",
+        "https://bscscan.com/*",
+        "https://www.bscscan.com/*",
+        "https://snowtrace.io/*",
+        "https://www.snowtrace.io/*",
+        "https://polygonscan.com/*",
+        "https://www.polygonscan.com/*",
+        "https://ftmscan.com/*",
+        "https://www.ftmscan.com/*",
+        "https://arbiscan.io/*",
+        "https://www.arbiscan.io/*",
+        "https://moonriver.moonscan.io/*",
+        "https://www.moonriver.moonscan.io/*",
+        "https://cronoscan.com/*",
+        "https://www.cronoscan.com/*",
+        "https://aurorascan.dev/*",
+        "https://www.aurorascan.dev/*",
+        "https://moonscan.io/*",
+        "https://www.moonscan.io/*",
+        "https://optimistic.etherscan.io/*",
+        "https://www.optimistic.etherscan.io/*"
+      ],
+      "js": ["/etherscan.js"]
+    }
+  ]
+}
