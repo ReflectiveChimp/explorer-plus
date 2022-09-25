@@ -1,6 +1,6 @@
 import pMap from 'p-map';
 import { id } from '@ethersproject/hash';
-import { FormatTypes, Interface } from '@ethersproject/abi';
+import { FormatTypes, FunctionFragment, Interface } from '@ethersproject/abi';
 import { css } from '@emotion/css';
 
 const clipboardBtnClass = css`
@@ -54,6 +54,17 @@ function getFirstMatch(value: string, expr: RegExp): string | null {
   }
 
   return match[1];
+}
+
+const nameRegex = new RegExp('^([0-9]+). ([^ ]+)');
+
+function getMethodNameIndex(value: string): [number, string | null] {
+  const match = value.match(nameRegex);
+  if (!match || match.length !== 3) {
+    return [-1, null];
+  }
+
+  return [parseInt(match[1]) - 1, match[2]];
 }
 
 function addFontAwesome() {
@@ -126,17 +137,17 @@ function getInterface(mode: 'read' | 'write'): Interface | null {
 function getWriteAbi(): string | null {
   const abiRegex = new RegExp('var result = (.*);$', 'm');
 
-  const xssScript = document.querySelector<HTMLScriptElement>('script[src*="/vendor/xss"]');
-  if (!xssScript) {
-    return null;
-  }
-  const inlineScript = xssScript.nextElementSibling as HTMLScriptElement | null;
+  const inlineScript = document.body.querySelector(
+    'body > script:last-child'
+  ) as HTMLScriptElement | null;
   if (!inlineScript || inlineScript.tagName.toLowerCase() !== 'script') {
+    console.warn('no inline script');
     return null;
   }
 
   const abiJson = getFirstMatch(inlineScript.innerHTML, abiRegex);
   if (!abiJson) {
+    console.warn('no abi regex match');
     return null;
   }
 
@@ -163,13 +174,61 @@ function getReadAbi(): string | null {
   return abiJson;
 }
 
+function getFunctions(iface: Interface, mode: 'read' | 'write'): FunctionFragment[] {
+  const matcher: (func: FunctionFragment) => boolean =
+    mode === 'read'
+      ? func => func.stateMutability === 'view' || func.stateMutability === 'pure' || func.constant
+      : func =>
+          !(func.stateMutability === 'view' || func.stateMutability === 'pure' || func.constant);
+  return (
+    iface.fragments.filter(fragment => fragment.type === 'function') as FunctionFragment[]
+  ).filter(matcher);
+}
+
+function getFunction(
+  iface: Interface,
+  name: string,
+  params: string[],
+  index: number,
+  mode: 'read' | 'write'
+): FunctionFragment | null {
+  // try by signature match (does not work for tuples)
+  try {
+    const exact = iface.getFunction(params.length ? `${name}(${params.join(',')})` : name);
+    if (exact) {
+      return exact;
+    }
+  } catch {}
+
+  // try by index
+  const functionFragments = getFunctions(iface, mode);
+  if (index < functionFragments.length) {
+    const possibleFragment = functionFragments[index];
+    if (
+      possibleFragment.name === name &&
+      possibleFragment.inputs.length === params.length &&
+      possibleFragment.inputs.map(input => input.type).join(',') === params.join(',')
+    ) {
+      return possibleFragment;
+    } else {
+      console.warn(possibleFragment);
+      console.warn(possibleFragment.name, name);
+      console.warn(possibleFragment.inputs.length, params.length);
+      console.warn(possibleFragment.inputs.map(input => input.type).join(','), params.join(','));
+    }
+  } else {
+    console.warn(functionFragments.length, index);
+  }
+
+  return null;
+}
+
 async function addMethodHashes(mode: 'read' | 'write') {
   addFontAwesome();
 
-  const nameRegex = new RegExp('^[0-9]+. ([^ ]+)');
-
   const iface = getInterface(mode);
   if (!iface) {
+    console.warn('no abi');
     return;
   }
 
@@ -178,25 +237,29 @@ async function addMethodHashes(mode: 'read' | 'write') {
   );
   await pMap(links, link => {
     if (!link.firstChild || !link.firstChild.textContent) {
+      console.warn('no method name text node');
       return;
     }
 
-    const methodName = getFirstMatch(link.firstChild.textContent, nameRegex);
+    const [methodIndex, methodName] = getMethodNameIndex(link.firstChild.textContent);
     if (!methodName) {
+      console.warn('method name not found in text node');
       return;
     }
 
     const card = link.closest<HTMLDivElement>('.card');
     if (!card) {
+      console.warn('no card');
       return;
     }
 
     const inputs = card.querySelectorAll<HTMLInputElement>('form input[data-type]');
-    const methodParams = Array.from(inputs).map(input => input.getAttribute('data-type'));
+    const methodParams = Array.from(inputs).map(input => input.getAttribute('data-type') as string);
     const container = document.createElement('div');
     const methodSignature = `${methodName}(${methodParams.join(',')})`;
-    const method = iface.getFunction(methodSignature);
+    const method = getFunction(iface, methodName, methodParams, methodIndex, mode);
     if (!method) {
+      console.warn(`${methodIndex} ${methodSignature} not found in abi `);
       return;
     }
 
