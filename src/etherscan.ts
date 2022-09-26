@@ -141,13 +141,13 @@ function getWriteAbi(): string | null {
     'body > script:last-child'
   ) as HTMLScriptElement | null;
   if (!inlineScript || inlineScript.tagName.toLowerCase() !== 'script') {
-    console.warn('no inline script');
+    console.debug('no inline script');
     return null;
   }
 
   const abiJson = getFirstMatch(inlineScript.innerHTML, abiRegex);
   if (!abiJson) {
-    console.warn('no abi regex match');
+    console.debug('no abi regex match');
     return null;
   }
 
@@ -211,13 +211,13 @@ function getFunction(
     ) {
       return possibleFragment;
     } else {
-      console.warn(possibleFragment);
-      console.warn(possibleFragment.name, name);
-      console.warn(possibleFragment.inputs.length, params.length);
-      console.warn(possibleFragment.inputs.map(input => input.type).join(','), params.join(','));
+      console.debug(possibleFragment);
+      console.debug(possibleFragment.name, name);
+      console.debug(possibleFragment.inputs.length, params.length);
+      console.debug(possibleFragment.inputs.map(input => input.type).join(','), params.join(','));
     }
   } else {
-    console.warn(functionFragments.length, index);
+    console.debug(functionFragments.length, index);
   }
 
   return null;
@@ -228,7 +228,7 @@ async function addMethodHashes(mode: 'read' | 'write') {
 
   const iface = getInterface(mode);
   if (!iface) {
-    console.warn('no abi');
+    console.debug('no abi');
     return;
   }
 
@@ -237,19 +237,19 @@ async function addMethodHashes(mode: 'read' | 'write') {
   );
   await pMap(links, link => {
     if (!link.firstChild || !link.firstChild.textContent) {
-      console.warn('no method name text node');
+      console.debug('no method name text node');
       return;
     }
 
     const [methodIndex, methodName] = getMethodNameIndex(link.firstChild.textContent);
     if (!methodName) {
-      console.warn('method name not found in text node');
+      console.debug('method name not found in text node');
       return;
     }
 
     const card = link.closest<HTMLDivElement>('.card');
     if (!card) {
-      console.warn('no card');
+      console.debug('no card');
       return;
     }
 
@@ -259,11 +259,11 @@ async function addMethodHashes(mode: 'read' | 'write') {
     const methodSignature = `${methodName}(${methodParams.join(',')})`;
     const method = getFunction(iface, methodName, methodParams, methodIndex, mode);
     if (!method) {
-      console.warn(`${methodIndex} ${methodSignature} not found in abi `);
+      console.debug(`${methodIndex} ${methodSignature} not found in abi `);
       return;
     }
 
-    const selector = id(method.format(FormatTypes.minimal)).substring(0, 10);
+    const selector = iface.getSighash(method);
 
     container.className = containerClass;
 
