@@ -5,8 +5,7 @@ module.exports = {
   mode: 'production',
   watchOptions: {},
   entry: {
-    background: path.resolve(__dirname, '..', 'src', 'background.ts'),
-    etherscan: path.resolve(__dirname, '..', 'src', 'etherscan.ts'),
+    etherscan: path.resolve(__dirname, '..', 'src', 'etherscan', 'index.ts'),
   },
   output: {
     path: path.join(__dirname, '../dist'),

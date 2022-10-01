@@ -1,5 +1,4 @@
 import pMap from 'p-map';
-import { id } from '@ethersproject/hash';
 import { FormatTypes, FunctionFragment, Interface } from '@ethersproject/abi';
 import { css } from '@emotion/css';
 
@@ -27,25 +26,6 @@ const containerClass = css`
   gap: 8px;
   align-content: center;
 `;
-
-type Task = {
-  paths: string[];
-  caseSensitive?: boolean;
-  method: () => Promise<void>;
-};
-
-const tasks: Task[] = [
-  {
-    paths: ['/readContract'],
-    caseSensitive: false,
-    method: () => addMethodHashes('read'),
-  },
-  {
-    paths: ['/writecontract/index'],
-    caseSensitive: false,
-    method: () => addMethodHashes('write'),
-  },
-];
 
 function getFirstMatch(value: string, expr: RegExp): string | null {
   const match = value.match(expr);
@@ -85,28 +65,6 @@ function parseMethodLabel(value: string): MethodLabel | null {
   };
 }
 
-function addFontAwesome() {
-  const solidFont = document.createElement('link') as HTMLLinkElement;
-  solidFont.rel = 'stylesheet';
-  solidFont.integrity =
-    'sha512-uj2QCZdpo8PSbRGL/g5mXek6HM/APd7k/B5Hx/rkVFPNOxAQMXD+t+bG4Zv8OAdUpydZTU3UHmyjjiHv2Ww0PA==';
-  solidFont.crossOrigin = 'anonymous';
-  solidFont.referrerPolicy = 'no-referrer';
-  solidFont.href = 'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/solid.min.css';
-
-  const iconCss = document.createElement('link') as HTMLLinkElement;
-  iconCss.rel = 'stylesheet';
-  iconCss.integrity =
-    'sha512-RvQxwf+3zJuNwl4e0sZjQeX7kUa3o82bDETpgVCH2RiwYSZVDdFJ7N/woNigN/ldyOOoKw8584jM4plQdt8bhA==';
-  iconCss.crossOrigin = 'anonymous';
-  iconCss.referrerPolicy = 'no-referrer';
-  iconCss.href =
-    'https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.2.0/css/fontawesome.min.css';
-
-  document.head.append(solidFont);
-  document.head.append(iconCss);
-}
-
 function createCopyButton(
   text: string,
   icon: string,
@@ -116,7 +74,7 @@ function createCopyButton(
   const textFragment = document.createTextNode(text);
 
   const i = document.createElement('i');
-  i.className = `fa-solid ${icon}`;
+  i.className = `fas ${icon}`;
 
   const btn = document.createElement('button') as HTMLButtonElement;
   btn.type = 'button';
@@ -252,9 +210,7 @@ function getFunction(
   return null;
 }
 
-async function addMethodHashes(mode: 'read' | 'write') {
-  addFontAwesome();
-
+export async function addMethodSelectors(mode: 'read' | 'write') {
   const iface = getInterface(mode);
   if (!iface) {
     console.debug('no abi');
@@ -323,30 +279,3 @@ async function addMethodHashes(mode: 'read' | 'write') {
     container.append(abiButton);
   });
 }
-
-async function runTasks() {
-  const location = window.location;
-
-  const promises = tasks
-    .map(task => {
-      const matches = task.paths.some(path => {
-        let currentPath = location.pathname;
-
-        if (!task.caseSensitive) {
-          currentPath = currentPath.toLowerCase();
-          path = path.toLowerCase();
-        }
-
-        return currentPath === path;
-      });
-
-      if (matches) {
-        return task.method();
-      }
-    })
-    .filter(promise => !!promise);
-
-  await Promise.all(promises);
-}
-
-runTasks();
