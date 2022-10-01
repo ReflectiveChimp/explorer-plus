@@ -1,3 +1,5 @@
+import minimatch from 'minimatch';
+
 export type Task = {
   paths: string[];
   caseSensitive?: boolean;
@@ -5,19 +7,12 @@ export type Task = {
 };
 
 export async function runTasks(tasks: Task[]) {
-  const location = window.location;
+  const windowPath = window.location.pathname;
 
   const promises = tasks
     .map(task => {
-      const matches = task.paths.some(path => {
-        let currentPath = location.pathname;
-
-        if (!task.caseSensitive) {
-          currentPath = currentPath.toLowerCase();
-          path = path.toLowerCase();
-        }
-
-        return currentPath === path;
+      const matches = task.paths.some(globPath => {
+        return minimatch(windowPath, globPath, { nocase: !task.caseSensitive });
       });
 
       if (matches) {

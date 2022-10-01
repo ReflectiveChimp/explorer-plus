@@ -4,9 +4,11 @@
   "author": "ReflectiveChimp",
   "license": "MIT",
   "private": true,
+  "type": "commonjs",
   "scripts": {
     "prepare": "husky install",
-    "build": "webpack --config webpack/webpack.config.js"
+    "build": "webpack --config webpack/webpack.config.js",
+    "watch": "webpack --config webpack/webpack.config.js --watch"
   },
   "devDependencies": {
     "@types/chrome": "^0.0.197",
@@ -20,12 +22,20 @@
     "@emotion/css": "^11.10.0",
     "@ethersproject/abi": "^5.7.0",
     "@ethersproject/hash": "^5.7.0",
+    "@shazow/whatsabi": "^0.1.0",
+    "@types/minimatch": "^5.1.2",
     "husky": "^8.0.1",
     "lint-staged": "^13.0.3",
+    "minimatch": "^5.1.0",
     "p-map": "4.0.0",
-    "prettier": "^2.7.1"
+    "path-browserify": "^1.0.1",
+    "prettier": "^2.7.1",
+    "vm-browserify": "^1.1.2"
   },
   "lint-staged": {
     "*.{ts,tsx,json}": "prettier --write"
-  }
+  },
+  "browserslist": [
+    "last 2 chrome versions"
+  ]
 }

@@ -2,8 +2,11 @@ const path = require('path');
 const CopyPlugin = require('copy-webpack-plugin');
 
 module.exports = {
+  target: ['web', 'es5'],
   mode: 'production',
-  watchOptions: {},
+  watchOptions: {
+    poll: 1000,
+  },
   entry: {
     etherscan: path.resolve(__dirname, '..', 'src', 'etherscan', 'index.ts'),
   },
@@ -13,6 +16,11 @@ module.exports = {
   },
   resolve: {
     extensions: ['.ts', '.js'],
+    fallback: {
+      fs: false,
+      vm: require.resolve('vm-browserify'),
+      path: require.resolve('path-browserify'),
+    },
   },
   module: {
     rules: [
@@ -25,7 +33,7 @@ module.exports = {
   },
   plugins: [
     new CopyPlugin({
-      patterns: [{from: '.', to: '.', context: 'public'}],
+      patterns: [{ from: '.', to: '.', context: 'public' }],
     }),
   ],
 };
