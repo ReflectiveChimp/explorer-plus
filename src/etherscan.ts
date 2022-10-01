@@ -56,15 +56,33 @@ function getFirstMatch(value: string, expr: RegExp): string | null {
   return match[1];
 }
 
-const nameRegex = new RegExp('^([0-9]+). ([^ ]+)');
+const methodLabelRegex = new RegExp('^([0-9]+)\\. ([^ ]+) ?(\\(([^)]+)\\))?$');
 
-function getMethodNameIndex(value: string): [number, string | null] {
-  const match = value.match(nameRegex);
-  if (!match || match.length !== 3) {
-    return [-1, null];
+type MethodLabel = {
+  index: number;
+  name: string;
+  selector?: string;
+};
+
+function parseMethodLabel(value: string): MethodLabel | null {
+  const match = value.match(methodLabelRegex);
+
+  if (!match || match.length !== 5) {
+    return null;
   }
 
-  return [parseInt(match[1]) - 1, match[2]];
+  if (match[4] !== undefined) {
+    return {
+      index: parseInt(match[1]),
+      name: match[2],
+      selector: match[4],
+    };
+  }
+
+  return {
+    index: parseInt(match[1]),
+    name: match[2],
+  };
 }
 
 function addFontAwesome() {
@@ -187,37 +205,48 @@ function getFunctions(iface: Interface, mode: 'read' | 'write'): FunctionFragmen
 
 function getFunction(
   iface: Interface,
-  name: string,
+  label: MethodLabel,
   params: string[],
-  index: number,
   mode: 'read' | 'write'
 ): FunctionFragment | null {
+  // try from selector
+  if (label.selector) {
+    try {
+      const selectorFunc = iface.getFunction(label.selector);
+      if (selectorFunc) {
+        return selectorFunc;
+      }
+    } catch {}
+  }
+
   // try by signature match (does not work for tuples)
   try {
-    const exact = iface.getFunction(params.length ? `${name}(${params.join(',')})` : name);
-    if (exact) {
-      return exact;
+    const signatureFunc = iface.getFunction(
+      params.length ? `${label.name}(${params.join(',')})` : label.name
+    );
+    if (signatureFunc) {
+      return signatureFunc;
     }
   } catch {}
 
   // try by index
   const functionFragments = getFunctions(iface, mode);
-  if (index < functionFragments.length) {
-    const possibleFragment = functionFragments[index];
+  if (label.index < functionFragments.length) {
+    const possibleFragment = functionFragments[label.index];
     if (
-      possibleFragment.name === name &&
+      possibleFragment.name === label.name &&
       possibleFragment.inputs.length === params.length &&
       possibleFragment.inputs.map(input => input.type).join(',') === params.join(',')
     ) {
       return possibleFragment;
     } else {
       console.debug(possibleFragment);
-      console.debug(possibleFragment.name, name);
+      console.debug(possibleFragment.name, label.name);
       console.debug(possibleFragment.inputs.length, params.length);
       console.debug(possibleFragment.inputs.map(input => input.type).join(','), params.join(','));
     }
   } else {
-    console.debug(functionFragments.length, index);
+    console.debug(functionFragments.length, label);
   }
 
   return null;
@@ -241,8 +270,8 @@ async function addMethodHashes(mode: 'read' | 'write') {
       return;
     }
 
-    const [methodIndex, methodName] = getMethodNameIndex(link.firstChild.textContent);
-    if (!methodName) {
+    const methodLabel = parseMethodLabel(link.firstChild.textContent);
+    if (!methodLabel) {
       console.debug('method name not found in text node');
       return;
     }
@@ -256,10 +285,10 @@ async function addMethodHashes(mode: 'read' | 'write') {
     const inputs = card.querySelectorAll<HTMLInputElement>('form input[data-type]');
     const methodParams = Array.from(inputs).map(input => input.getAttribute('data-type') as string);
     const container = document.createElement('div');
-    const methodSignature = `${methodName}(${methodParams.join(',')})`;
-    const method = getFunction(iface, methodName, methodParams, methodIndex, mode);
+    const methodSignature = `${methodLabel.name}(${methodParams.join(',')})`;
+    const method = getFunction(iface, methodLabel, methodParams, mode);
     if (!method) {
-      console.debug(`${methodIndex} ${methodSignature} not found in abi `);
+      console.debug(`${methodLabel.name} ${methodSignature} not found in abi `);
       return;
     }
 
@@ -269,7 +298,7 @@ async function addMethodHashes(mode: 'read' | 'write') {
 
     link.style.gap = '8px';
     link.classList.remove('justify-content-between');
-    link.firstChild.textContent = `${link.firstChild.textContent.trimEnd()}(${methodParams.join(
+    link.firstChild.textContent = `${methodLabel.index}. ${methodLabel.name}(${methodParams.join(
       ','
     )})`;
     link.insertBefore(container, link.lastChild);
