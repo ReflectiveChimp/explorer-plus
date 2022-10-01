@@ -52,7 +52,7 @@ async function attemptGuessMethods(bytecodePre: HTMLPreElement) {
   }
   const parent = bytecodePre.parentElement.parentElement;
 
-  const selectors = selectorsFromBytecode(code);
+  const selectors = selectorsFromBytecode(code.trim());
   if (!selectors.length) {
     return;
   }
